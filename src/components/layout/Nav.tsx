@@ -5,22 +5,31 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useGSAP } from '@gsap/react'
 import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import MagneticButton from '@/components/ui/MagneticButton'
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(useGSAP, ScrollTrigger)
+}
 
 const links = [
   { href: '/work',     label: 'Work'     },
   { href: '/services', label: 'Services' },
   { href: '/process',  label: 'Process'  },
+  { href: '/pricing',  label: 'Pricing'  },
   { href: '/about',    label: 'About'    },
 ]
 
 export default function Nav() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const navRef     = useRef<HTMLElement>(null)
+  const menuOpenRef = useRef(false) // Track for GSAP callbacks without stale closures
+  
+  const headerRef  = useRef<HTMLElement>(null)
+  const navRef     = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
   const pathname   = usePathname()
 
-  const { contextSafe } = useGSAP({ scope: navRef })
+  const { contextSafe } = useGSAP({ scope: headerRef })
 
   const menuTL = useRef<gsap.core.Timeline | null>(null)
 
@@ -47,22 +56,108 @@ export default function Nav() {
       )
   })
 
+  // Dynamic Scroll Response for Nav Pill - Beautiful Collapse
+  useGSAP(() => {
+    let lastDirection = 0;
+    
+    // Create a 3D perspective context on the header to allow 3D fold on the nav
+    gsap.set(headerRef.current, { perspective: 1000 });
+    gsap.set(navRef.current, { transformOrigin: "top center" });
+
+    ScrollTrigger.create({
+      start: 'top top',
+      end: 'max',
+      onUpdate: (self) => {
+        // If the mobile menu overlay is active, keep the nav pill fully visible
+        if (menuOpenRef.current) return;
+
+        const currentScrollY = self.scrollY;
+        
+        // Activate "Collapse" threshold
+        if (currentScrollY > 120) {
+          // Scrolling Down -> Elegantly hide, folding slightly away
+          if (self.direction === 1 && lastDirection !== 1) {
+            gsap.to(navRef.current, {
+              yPercent: -120, // Slide completely out of view bounds
+              rotateX: 15,    // Subtle 3D fold back
+              scale: 0.95,    // Shrink back into depth
+              opacity: 0,     // Fade out
+              duration: 0.6,
+              ease: 'power3.inOut',
+              overwrite: 'auto'
+            });
+            lastDirection = 1;
+          } 
+          // Scrolling Up -> Snap back with a premium spring-like release
+          else if (self.direction === -1 && lastDirection !== -1) {
+            gsap.to(navRef.current, {
+              yPercent: 0,
+              rotateX: 0,
+              scale: 1,
+              opacity: 1,
+              duration: 0.8,
+              ease: 'expo.out',
+              overwrite: 'auto'
+            });
+            lastDirection = -1;
+          }
+        } 
+        // Reached Absolute Top (Hero territory)
+        else if (currentScrollY <= 120 && lastDirection !== 0) {
+          gsap.to(navRef.current, {
+            yPercent: 0,
+            rotateX: 0,
+            scale: 1,
+            opacity: 1,
+            maxWidth: 1100, // Reset width
+            duration: 0.8,
+            ease: 'expo.out',
+            overwrite: 'auto'
+          });
+          lastDirection = 0;
+        }
+
+        // The "Breathing" Effect -> Pill compresses width slightly on fast down-scroll
+        const velocity = Math.abs(self.getVelocity());
+        if (velocity > 50 && currentScrollY > 150 && self.direction === 1 && !menuOpenRef.current) {
+             gsap.to(navRef.current, {
+                 maxWidth: Math.max(900, 1100 - velocity * 0.15),
+                 duration: 0.4,
+                 ease: 'power2.out',
+                 overwrite: 'auto'
+             });
+        } else if ((self.direction === -1 || currentScrollY <= 150) && !menuOpenRef.current) {
+             gsap.to(navRef.current, {
+                 maxWidth: 1100,
+                 duration: 0.8,
+                 ease: 'expo.out',
+                 overwrite: 'auto'
+             });
+        }
+
+      }
+    });
+
+  }, { scope: headerRef }) // Only runs setup once
+
   useEffect(() => {
     window.addEventListener('preloader:complete', entranceAnimation, { once: true })
     return () => window.removeEventListener('preloader:complete', entranceAnimation)
   }, [])
 
   const toggleMenu = () => {
-    setMenuOpen(!menuOpen)
-    menuOpen ? menuTL.current?.reverse() : menuTL.current?.play()
+    const newState = !menuOpen
+    setMenuOpen(newState)
+    menuOpenRef.current = newState
+    newState ? menuTL.current?.play() : menuTL.current?.reverse()
   }
 
   return (
     <>
-      <header className="global-nav-container fixed top-8 left-1/2 -translate-x-1/2 z-[1000] w-[92%] max-w-[1100px] pointer-events-none transition-colors duration-500">
+      <header ref={headerRef} className="global-nav-container fixed top-8 left-1/2 -translate-x-1/2 z-[1000] w-[92%] max-w-[1100px] pointer-events-none">
         
-        {/* Floating Glass Pill - Nav element (Uses backdrop blur so text isn't lost in high contrast areas) */}
-        <div ref={navRef} className="nav-pill relative w-full rounded-full border border-white/20 bg-black/40 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] opacity-0 pointer-events-auto overflow-hidden transition-colors duration-500">
+        {/* Floating Glass Pill */}
+        <div ref={navRef} className="nav-pill relative w-full mx-auto rounded-full border border-white/20 bg-black/40 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] opacity-0 pointer-events-auto overflow-hidden transition-colors duration-500 will-change-transform">
           
           <div className="absolute inset-0 transition-opacity duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
 
@@ -78,10 +173,15 @@ export default function Nav() {
                 <Link
                   key={href}
                   href={href}
-                  className={`font-mono text-xs uppercase tracking-[0.25em] transition-all duration-500 ease-out
-                    ${pathname === href ? 'text-white' : 'text-white/40 hover:text-white hover:scale-105 hover:tracking-[0.3em]'}`}
+                  className={`group relative font-mono text-xs uppercase tracking-[0.25em] transition-all duration-500 ease-out py-2
+                    ${pathname === href ? 'text-white' : 'text-white/40 hover:text-white'}`}
                 >
-                  {label}
+                  <span className="relative z-10 inline-block transition-transform duration-500 group-hover:-translate-y-1">
+                    {label}
+                  </span>
+                  
+                  {/* Subtle glowing animated underline */}
+                  <span className="absolute bottom-0 left-1/2 w-0 h-[1px] bg-white/80 shadow-[0_0_10px_rgba(255,255,255,1)] -translate-x-1/2 transition-all duration-500 ease-out group-hover:w-full opacity-0 group-hover:opacity-100" />
                 </Link>
               ))}
             </nav>
@@ -111,7 +211,7 @@ export default function Nav() {
         </div>
       </header>
 
-      {/* Aggressive Shutter-Blade cinematic overlay (moved OUTSIDE header to prevent bounding box collapse) */}
+      {/* Aggressive Shutter-Blade cinematic overlay */}
       <div
         ref={overlayRef}
         className="fixed top-0 left-0 w-full h-[100svh] bg-[#020202]/98 backdrop-blur-2xl flex flex-col justify-center items-center opacity-0 z-[1001]"

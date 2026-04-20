@@ -1,178 +1,183 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useGSAP } from '@gsap/react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import SplitReveal from '@/components/ui/SplitReveal'
 import { projects } from '@/lib/data/work'
 import Image from 'next/image'
+import { FastAverageColor } from 'fast-average-color'
 
-function WorkCard({ project, onHover, onLeave }: { project: any; onHover: (color: string) => void; onLeave: () => void }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const tlRef = useRef<gsap.core.Timeline | null>(null)
-
-  useGSAP(() => {
-    const overlay = ref.current!.querySelector('.work-overlay')
-    const img = ref.current!.querySelector('img')
-
-    tlRef.current = gsap.timeline({ paused: true })
-    tlRef.current
-      .to(overlay, { opacity: 1, duration: 0.35 })
-      .to(img, { scale: 1.05, duration: 0.6, ease: 'power2.out' }, '<')
-  }, { scope: ref })
-
-  const handleEnter = () => {
-    tlRef.current?.play()
-    onHover(project.color || '#111111')
-  }
-
-  const handleLeave = () => {
-    tlRef.current?.reverse()
-    onLeave()
-  }
-
-  return (
-    <div
-      ref={ref}
-      className="flex-shrink-0 w-[clamp(280px,35vw,480px)] rounded-sm overflow-hidden cursor-pointer group"
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
-    >
-      <div className="relative aspect-video overflow-hidden">
-        <Image src={project.thumb} alt={project.title} fill className="object-cover" />
-        <div className="work-overlay absolute inset-0 opacity-0 flex items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}>
-          <span className="text-white text-5xl font-light opacity-80 group-hover:scale-110 transition-transform duration-500">&#9655;</span>
-        </div>
-      </div>
-      <div className="pt-6">
-        <span className="font-body text-[0.75rem] tracking-[0.2em] uppercase text-accent-dim">
-          {project.category}
-        </span>
-        <h3 className="font-display font-light text-accent text-3xl mt-2 tracking-tight group-hover:text-highlight transition-colors duration-300">
-          {project.title}
-        </h3>
-      </div>
-    </div>
-  )
-}
-
-function FilterBar({ active, onChange }: { active: string; onChange: (f: string) => void }) {
-  const filters = ['all', 'Commercial', 'Short-form', 'Long-form', 'Podcast']
-  return (
-    <div className="px-[clamp(1.5rem,6vw,6rem)] py-6 flex gap-4 flex-wrap border-b border-white/10 relative z-10">
-      {filters.map(f => (
-        <button
-          key={f}
-          onClick={() => onChange(f)}
-          className={`font-body text-[0.8125rem] tracking-[0.1em] px-5 py-2 uppercase transition-all duration-300 ${
-            active === f
-              ? 'text-white border-b-2 border-white'
-              : 'text-accent-dim hover:text-white border-b-2 border-transparent'
-          }`}
-        >
-          {f === 'all' ? 'All' : f}
-        </button>
-      ))}
-    </div>
-  )
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger)
 }
 
 export default function WorkPage() {
-  const [filter, setFilter] = useState('all')
-  const sectionRef = useRef<HTMLElement>(null)
-  const trackRef = useRef<HTMLDivElement>(null)
-  const glowRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLElement>(null)
+  const floatingRef = useRef<HTMLDivElement>(null)
+  const imagesRef = useRef<HTMLDivElement>(null)
+  
+  const [activeProject, setActiveProject] = useState<number | null>(null)
+  const [bgColor, setBgColor] = useState<string>('#0a0a0a')
+  const [dominantColors, setDominantColors] = useState<Record<number, string>>({})
 
-  useGSAP(() => {
-    const isMobile = window.matchMedia('(max-width: 767px)').matches
-    if (isMobile) return
+  const { contextSafe } = useGSAP({ scope: containerRef })
 
-    const track = trackRef.current!
-    
-    // Quick timeout to let DOM settle if using dynamic images
-    setTimeout(() => {
-      const totalW = track.scrollWidth - window.innerWidth
-      if (totalW <= 0) return
+  // Extract dominant colors asynchronously
+  useEffect(() => {
+    const fac = new FastAverageColor()
+    projects.forEach(p => {
+      fac.getColorAsync(p.thumb, { algorithm: 'dominant', crossOrigin: 'anonymous' })
+        .then(color => {
+          // Darken the dominant color slightly for better contrast on text
+          setDominantColors(prev => ({ ...prev, [p.id]: color.hex }))
+        })
+        .catch(err => {
+          console.warn('Failed to extract color for:', p.thumb, err)
+        })
+    })
+    return () => fac.destroy()
+  }, [])
 
-      const st = ScrollTrigger.create({
-        id: 'work-horizontal',
-        trigger: sectionRef.current!,
-        pin: true, 
-        anticipatePin: 1, 
-        scrub: 1.2,
-        end: () => `+=${totalW}`,
-        invalidateOnRefresh: true,
-        animation: gsap.to(track, { x: -totalW, ease: 'none' })
-      })
-    }, 100)
+  // Floating Image Cursor Logic
+  useEffect(() => {
+    if (!floatingRef.current) return
+    const xTo = gsap.quickTo(floatingRef.current, 'left', { duration: 0.6, ease: 'power3.out' })
+    const yTo = gsap.quickTo(floatingRef.current, 'top', { duration: 0.6, ease: 'power3.out' })
 
-    return () => {
-      ScrollTrigger.getById('work-horizontal')?.kill()
+    const moveImage = (e: MouseEvent) => {
+      xTo(e.clientX)
+      yTo(e.clientY)
     }
-  }, { scope: sectionRef, dependencies: [filter] })
+    window.addEventListener('mousemove', moveImage)
+    return () => window.removeEventListener('mousemove', moveImage)
+  }, [])
 
-  const handleHover = (color: string) => {
-    gsap.to(glowRef.current, { 
-      backgroundColor: color, 
-      opacity: 0.4, 
-      duration: 0.8, 
-      ease: 'power2.out' 
+  // Reveal animations for rows
+  useGSAP(() => {
+    const rows = gsap.utils.toArray('.work-row');
+    rows.forEach((row: any) => {
+      gsap.from(row, {
+        scrollTrigger: {
+          trigger: row,
+          start: 'top 95%',
+        },
+        y: 100,
+        opacity: 0,
+        duration: 1,
+        ease: 'power3.out'
+      })
     })
-  }
+  }, { scope: containerRef })
 
-  const handleLeave = () => {
-    gsap.to(glowRef.current, { 
-      opacity: 0, 
-      duration: 0.6, 
-      ease: 'power2.inOut' 
+  const handleEnter = contextSafe((index: number, color: string) => {
+    setActiveProject(index)
+    setBgColor(color)
+
+    // Reveal floating container
+    gsap.to(floatingRef.current, {
+      scale: 1,
+      opacity: 1,
+      duration: 0.6,
+      ease: 'power3.out',
+      rotate: Math.random() * 10 - 5 // Slight random rotation for organic feel
     })
-  }
 
-  const filteredProjects = projects.filter((p) => filter === 'all' || p.category === filter)
+    // Shift internal images container like a slot machine vertical slide
+    gsap.to(imagesRef.current, {
+      yPercent: -100 * index,
+      duration: 0.6,
+      ease: 'power3.out'
+    })
+  })
+
+  const handleLeave = contextSafe(() => {
+    setActiveProject(null)
+    setBgColor('#0a0a0a')
+
+    // Hide floating container
+    gsap.to(floatingRef.current, {
+      scale: 0.4,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'power2.inOut',
+      rotate: 0
+    })
+  })
 
   return (
-    <main className="bg-bg-base relative min-h-screen selection:bg-white selection:text-black">
+    <main 
+      ref={containerRef}
+      className="relative min-h-screen text-white pt-32 pb-20 bg-[#080808] overflow-hidden"
+    >
       
-      {/* Ambilight glow background */}
+      {/* Darkened Tint Overlay for extracted colors so the white text never fades entirely */}
       <div 
-        ref={glowRef} 
-        className="fixed inset-0 z-0 opacity-0 pointer-events-none mix-blend-screen"
-        style={{ filter: 'blur(100px)' }}
+        className="fixed inset-0 pointer-events-none transition-colors duration-1000 ease-in-out opacity-[0.25] z-0" 
+        style={{ backgroundColor: bgColor }} 
       />
 
-      <section className="px-[clamp(1.5rem,6vw,6rem)] pt-40 pb-10 relative z-10">
-        <SplitReveal
-          as="h1"
-          className="font-display font-light text-accent leading-[0.9] uppercase tracking-tighter drop-shadow-2xl"
-          style={{ fontSize: 'clamp(4rem, 10vw, 8rem)' }}
-          delay={0.5}
-        >
-          Selected Works
-        </SplitReveal>
-        <p className="font-body text-accent-dim mt-6 text-[1.125rem] max-w-md">
-          A cinematic showcase of our high-impact editing. Hover to ignite the ambilight.
-        </p>
-      </section>
-
-      <FilterBar active={filter} onChange={setFilter} />
-
-      <section ref={sectionRef} className="overflow-hidden md:h-screen flex items-center relative z-10 py-12 md:py-0 pt-20 md:pt-0">
-        <div
-          ref={trackRef}
-          className="flex flex-col md:flex-row gap-12 px-[clamp(1.5rem,6vw,6rem)] will-change-transform"
-        >
-          {filteredProjects.map((p) => (
-            <WorkCard 
-              key={p.id} 
-              project={p} 
-              onHover={handleHover} 
-              onLeave={handleLeave} 
-            />
+      {/* Custom Floating Image Container (Desktop Only, hidden on mobile via CSS) */}
+      <div 
+        ref={floatingRef}
+        className="hidden md:block fixed top-0 left-0 w-[480px] h-[270px] pointer-events-none z-50 overflow-hidden rounded-xl shadow-2xl border border-white/10 scale-0 opacity-0 -translate-x-1/2 -translate-y-1/2"
+      >
+        <div ref={imagesRef} className="w-full h-full relative will-change-transform">
+          {projects.map((p) => (
+            <div key={p.id} className="relative w-full h-[270px]">
+              <Image src={p.thumb} alt={p.title} fill className="object-cover" priority />
+            </div>
           ))}
         </div>
+      </div>
+
+      {/* Ambilight radial glow background fixed */}
+      <div className="fixed inset-0 z-0 pointer-events-none mix-blend-screen opacity-[0.35] transition-colors duration-1000" style={{ backgroundColor: bgColor, filter: 'blur(160px)' }} />
+
+      {/* Vignette to ensure text readability around edges and headers */}
+      <div className="fixed inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)]" />
+
+      <section className="px-[clamp(1.5rem,6vw,6rem)] relative z-10">
+        <div className="mb-20 overflow-hidden">
+          <SplitReveal as="h1" className="font-display font-light uppercase tracking-tighter text-[clamp(4.5rem,12vw,12rem)] leading-[0.8] text-white mix-blend-difference">
+            Selected Works
+          </SplitReveal>
+        </div>
+
+        <div className="border-t border-white/20 mt-12 relative z-20">
+          {projects.map((p, i) => {
+            // Use dynamically extracted dominant color if available, fallback to the hardcoded brand color
+            const projectColor = dominantColors[p.id] || p.color
+
+            return (
+              <div 
+                key={p.id}
+                className="work-row group relative border-b border-white/20 py-10 md:py-16 flex flex-col md:flex-row md:items-center justify-between cursor-pointer overflow-hidden transition-all duration-500 hover:bg-white/5"
+                onMouseEnter={() => handleEnter(i, projectColor)}
+                onMouseLeave={handleLeave}
+              >
+                {/* Massive marquee-like text that subtly shifts right on hover */}
+              <div className="relative z-10 w-full flex flex-col md:flex-row md:items-center justify-between px-4 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-8">
+                <h2 className="font-display font-light text-[clamp(3rem,8vw,7rem)] uppercase leading-[0.85] tracking-tight mix-blend-difference text-white">
+                  {p.title}
+                </h2>
+                <div className="mt-4 md:mt-0 flex items-center gap-6 opacity-60 group-hover:opacity-100 transition-opacity duration-500">
+                  <span className="font-mono text-xs tracking-[0.3em] uppercase">{p.category}</span>
+                  <span className="text-xl md:text-3xl font-light transform group-hover:translate-x-4 transition-transform duration-500 ease-out">&#8594;</span>
+                </div>
+              </div>
+              
+              {/* Mobile Image inline fallback since floating is hidden */}
+              <div className="md:hidden w-full aspect-video relative mt-6 rounded-md overflow-hidden opacity-0 h-0 group-hover:h-auto group-hover:opacity-100 transition-all duration-700">
+                 <Image src={p.thumb} alt={p.title} fill className="object-cover" />
+              </div>
+            </div>
+            )
+          })}
+        </div>
       </section>
+
     </main>
   )
 }

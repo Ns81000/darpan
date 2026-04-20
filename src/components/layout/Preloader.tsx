@@ -52,8 +52,8 @@ export default function Preloader() {
       yPercent: -100, 
       duration: 1.2, 
       ease: 'expo.inOut' 
-    }, '-=0.4')
-  }, [])
+    }, '-=0.4');
+  }, []);
 
   return (
     <div
