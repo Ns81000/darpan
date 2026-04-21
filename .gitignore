@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+.claude
+.vscode
 
 # next.js
 /.next/
