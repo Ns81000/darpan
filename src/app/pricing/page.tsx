@@ -68,6 +68,8 @@ export default function PricingPage() {
        }
     )
 
+    const listeners: { el: Element, type: string, fn: EventListener }[] = []
+
     // 3D Hover & Sibling Blur Mechanics
     cards.forEach((card) => {
        // QuickTo for ultra-smooth 60fps mapping
@@ -76,7 +78,7 @@ export default function PricingPage() {
        const glareXTo = gsap.quickTo(card.querySelector('.glare'), "x", { duration: 0.4, ease: "power3.out" })
        const glareYTo = gsap.quickTo(card.querySelector('.glare'), "y", { duration: 0.4, ease: "power3.out" })
 
-       card.addEventListener('mousemove', (e) => {
+       const onMouseMove = (e: MouseEvent) => {
           const rect = card.getBoundingClientRect()
           const relX = e.clientX - rect.left
           const relY = e.clientY - rect.top
@@ -92,9 +94,9 @@ export default function PricingPage() {
           // Move Glare to mouse position
           glareXTo(relX - 500) // 500 is half of the 1000px width
           glareYTo(relY - 500)
-       })
+       }
 
-       card.addEventListener('mouseenter', () => {
+       const onMouseEnter = () => {
           // Bring up glare
           gsap.to(card.querySelector('.glare'), { opacity: 0.4, duration: 0.4 })
           
@@ -111,9 +113,9 @@ export default function PricingPage() {
             ease: 'power2.out',
             overwrite: 'auto'
           })
-       })
+       }
 
-       card.addEventListener('mouseleave', () => {
+       const onMouseLeave = () => {
           // Reset rotations and lifts
           xTo(0)
           yTo(0)
@@ -129,7 +131,15 @@ export default function PricingPage() {
             ease: 'power3.out',
             overwrite: 'auto'
           })
-       })
+       }
+
+       card.addEventListener('mousemove', onMouseMove as EventListener)
+       card.addEventListener('mouseenter', onMouseEnter)
+       card.addEventListener('mouseleave', onMouseLeave)
+       
+       listeners.push({ el: card, type: 'mousemove', fn: onMouseMove as EventListener })
+       listeners.push({ el: card, type: 'mouseenter', fn: onMouseEnter })
+       listeners.push({ el: card, type: 'mouseleave', fn: onMouseLeave })
     })
 
     // FAQ animations
@@ -139,21 +149,27 @@ export default function PricingPage() {
       const icon = item.querySelector('.faq-icon')!
       gsap.set(a, { height: 0, opacity: 0, overflow: 'hidden' })
 
-      q.addEventListener('click', () => {
+      const onFaqClick = () => {
         const isOpen = item.classList.contains('open')
         document.querySelectorAll('.faq-item.open').forEach(openItem => {
           openItem.classList.remove('open')
-          gsap.to(openItem.querySelector('.faq-a'), { height: 0, opacity: 0, duration: 0.45, ease: 'power2.inOut' })
-          gsap.to(openItem.querySelector('.faq-icon'), { rotation: 0, duration: 0.3 })
+          gsap.to(openItem.querySelector('.faq-a'), { height: 0, opacity: 0, duration: 0.45, ease: 'power2.inOut', overwrite: 'auto' })
+          gsap.to(openItem.querySelector('.faq-icon'), { rotation: 0, duration: 0.3, overwrite: 'auto' })
         })
         if (!isOpen) {
           item.classList.add('open')
-          gsap.to(a, { height: 'auto', opacity: 1, duration: 0.5, ease: 'power2.inOut' })   
-          gsap.to(icon, { rotation: 135, duration: 0.3, ease: 'back.out(2)' })   
+          gsap.to(a, { height: 'auto', opacity: 1, duration: 0.5, ease: 'power2.inOut', overwrite: 'auto' })   
+          gsap.to(icon, { rotation: 135, duration: 0.3, ease: 'back.out(2)', overwrite: 'auto' })   
         }
-      })
+      }
+
+      q.addEventListener('click', onFaqClick as EventListener)
+      listeners.push({ el: q, type: 'click', fn: onFaqClick as EventListener })
     })
 
+    return () => {
+      listeners.forEach(({ el, type, fn }) => el.removeEventListener(type, fn))
+    }
   }, { scope: containerRef })
 
   return (

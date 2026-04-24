@@ -6,9 +6,9 @@ import { LenisProvider }    from '@/providers/LenisProvider'
 import { TransitionRouter } from 'next-transition-router'
 import Nav            from '@/components/layout/Nav'
 import Footer         from '@/components/layout/Footer'
-import Cursor         from '@/components/layout/Cursor'
 import Preloader      from '@/components/layout/Preloader'
 import PageTransition from '@/components/layout/PageTransition'
+import RouteLoader    from '@/components/layout/RouteLoader'
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -37,8 +37,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <LenisProvider>
             <TransitionRouter>
               <Preloader />
-              <Cursor />
               <Nav />
+              <RouteLoader />
               <PageTransition>
                 <main>{children}</main>
               </PageTransition>

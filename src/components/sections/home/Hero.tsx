@@ -28,8 +28,9 @@ export default function Hero() {
     if (animatedRef.current) return
     animatedRef.current = true
 
-    // New elegant SplitType setup
-    const text = new SplitType('.hero-word', { types: 'chars' })
+    // New elegant SplitType setup - scoped to prevent stale DOM nodes fetching
+    const words = sectionRef.current ? Array.from(sectionRef.current.querySelectorAll('.hero-word')) : '.hero-word'
+    const text = new SplitType(words as any, { types: 'chars' })
     splitRef.current = text
 
     const tl = gsap.timeline()
@@ -53,6 +54,10 @@ export default function Hero() {
     gsap.to(orb3Ref.current, { x: '10vw', y: '10vh', rotate: 180, scale: 1.5, duration: 18, repeat: -1, yoyo: true, ease: 'power2.inOut' })
     gsap.to(orb4Ref.current, { x: '-15vw', y: '-15vh', rotate: -180, scale: 1.8, duration: 22, repeat: -1, yoyo: true, ease: 'power1.inOut' })
 
+    // Reset scroll trigger position forcibly for client routing
+    window.scrollTo(0, 0);
+    ScrollTrigger.refresh();
+
     // 1. Elegant Mask Reveal Animation (Smooth & Controlled)
     tl.to(text.chars, {
       y: '0%',
@@ -73,37 +78,54 @@ export default function Hero() {
       y: 0,
       stagger: 0.1,
       duration: 1.5, 
-      ease: 'power3.out'
+      ease: 'power3.out',
+      onComplete: () => {
+        // init parallax ScrollTriggers safely after intro animation is completed
+        // preventing them from measuring wrong window scroll offsets instantly.
+        gsap.to('.hero-text-row', {
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 1
+          },
+          y: (index) => (index + 1) * -50,
+          opacity: 0,
+          stagger: 0.05
+        })
+
+        gsap.to('.hero-float, .hud-el', {
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: 1
+          },
+          y: -100
+        })
+        ScrollTrigger.refresh()
+      }
     }, '-=1.0')
-
-    // 2. Controlled ScrollTrigger: Gentle Parallax instead of horizontal shatter
-    // This stops the text from bursting out of the container bounds and breaking mobile.
-    gsap.to('.hero-text-row', {
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: 'top top',
-        end: 'bottom top',
-        scrub: 1
-      },
-      y: (index) => (index + 1) * -50,
-      opacity: 0,
-      stagger: 0.05
-    })
-
-    gsap.to('.hero-float, .hud-el', {
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: 'top top',
-        end: 'bottom top',
-        scrub: 1
-      },
-      y: -100
-      // Removed opacity: 0 to prevent the background elements from disappearing
-    })
   })
 
   useEffect(() => {
-    window.addEventListener('preloader:complete', startAnimation, { once: true })
+    let fallbackTimer: NodeJS.Timeout
+    const transitionHandler = () => {
+      clearTimeout(fallbackTimer)
+      setTimeout(startAnimation, 100)
+    }
+
+    // @ts-ignore
+    if (!window.__PRELOADER_COMPLETE__) {
+      window.addEventListener('preloader:complete', startAnimation, { once: true })
+    } else {
+      const fallbackTimer = setTimeout(startAnimation, 300)
+      return () => {
+        clearTimeout(fallbackTimer)
+        if (splitRef.current) splitRef.current.revert()
+      }
+    }
+
     return () => {
       window.removeEventListener('preloader:complete', startAnimation)
       if (splitRef.current) splitRef.current.revert()
@@ -205,10 +227,6 @@ export default function Hero() {
         <div className="flex justify-between font-mono text-[9px] md:text-xs text-white/50 tracking-widest items-end uppercase">
           <span className="hud-el opacity-0">F 2.8 \\ 4K</span>
           <span className="hud-el opacity-0">DARPAN.STUDIOS</span>
-        </div>
-
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 border-[1px] border-white/10 rounded-full flex items-center justify-center hud-el opacity-0 pointer-events-none">
-          <div className="w-[2px] h-[2px] bg-white opacity-60 rounded-full" />
         </div>
       </div>
 

@@ -141,8 +141,25 @@ export default function Nav() {
   }, { scope: headerRef }) // Only runs setup once
 
   useEffect(() => {
-    window.addEventListener('preloader:complete', entranceAnimation, { once: true })
-    return () => window.removeEventListener('preloader:complete', entranceAnimation)
+    let fallbackTimer: NodeJS.Timeout
+    const transitionHandler = () => {
+      clearTimeout(fallbackTimer)
+      setTimeout(entranceAnimation, 100)
+    }
+
+    // @ts-ignore
+    if (!window.__PRELOADER_COMPLETE__) {
+      window.addEventListener('preloader:complete', entranceAnimation, { once: true })
+    } else {
+      window.addEventListener('transition:entered', transitionHandler, { once: true })
+      fallbackTimer = setTimeout(entranceAnimation, 800)
+    }
+    
+    return () => {
+      window.removeEventListener('preloader:complete', entranceAnimation)
+      window.removeEventListener('transition:entered', transitionHandler)
+      clearTimeout(fallbackTimer)
+    }
   }, [])
 
   const toggleMenu = () => {

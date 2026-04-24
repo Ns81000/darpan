@@ -12,6 +12,8 @@ export default function Preloader() {
     const tl = gsap.timeline({
       onComplete: () => {
         if (containerRef.current) containerRef.current.style.display = 'none'
+        // @ts-ignore
+        window.__PRELOADER_COMPLETE__ = true
         window.dispatchEvent(new Event('preloader:complete'))
       }
     })
@@ -85,7 +87,7 @@ export default function Preloader() {
         {/* Brand Cinematic Text */}
         <div ref={brandRef} className="relative flex items-center justify-center gap-2 overflow-hidden px-4">
           {['D', 'A', 'R', 'P', 'A', 'N'].map((char, i) => (
-            <span key={i} className="brand-char font-display font-light text-[clamp(2.5rem,7vw,7rem)] tracking-widest text-white/90 leading-none">
+            <span key={i} className="brand-char opacity-0 font-display font-light text-[clamp(2.5rem,7vw,7rem)] tracking-widest text-white/90 leading-none">
               {char}
             </span>
           ))}

@@ -34,14 +34,6 @@ body::after {
   mix-blend-mode: screen;
 }
 
-/* Custom cursor */
-* { cursor: none; }
-a, button { cursor: none; }
-@media (pointer: coarse) {
-  * { cursor: auto; }
-  a, button { cursor: pointer; }
-}
-
 /* Hide overflow during page transitions */
 .page-transitioning { overflow: hidden; }
 
