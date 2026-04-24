@@ -14,13 +14,14 @@ export function LenisProvider({ children }: PropsWithChildren) {
       touchMultiplier: 1.5,
     })
 
-    gsap.ticker.add((time) => { lenis.raf(time * 1000) })
+    const tickerCallback = (time: number) => { lenis.raf(time * 1000) }
+    gsap.ticker.add(tickerCallback)
     gsap.ticker.lagSmoothing(0)
     lenis.on('scroll', () => ScrollTrigger.update())
 
     return () => {
       lenis.destroy()
-      gsap.ticker.remove((time) => { lenis.raf(time * 1000) })
+      gsap.ticker.remove(tickerCallback)
     }
   }, [])
 

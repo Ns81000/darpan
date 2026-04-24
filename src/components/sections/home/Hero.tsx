@@ -132,6 +132,19 @@ export default function Hero() {
     }
   }, [])
 
+  // QuickTo instances for 60fps mouse parallax
+  const xFloat = useRef<Function>()
+  const yFloat = useRef<Function>()
+  const xHud = useRef<Function>()
+  const yHud = useRef<Function>()
+
+  useGSAP(() => {
+    xFloat.current = gsap.quickTo('.hero-float', 'x', { duration: 1.8, ease: 'power2.out' })
+    yFloat.current = gsap.quickTo('.hero-float', 'y', { duration: 1.8, ease: 'power2.out' })
+    xHud.current = gsap.quickTo('.hud-el', 'x', { duration: 0.5, ease: 'power4.out' })
+    yHud.current = gsap.quickTo('.hud-el', 'y', { duration: 0.5, ease: 'power4.out' })
+  }, { scope: sectionRef })
+
   // Deep Layered Parallax Physics
   const handleMouseMove = contextSafe((e: React.MouseEvent) => {
     const { clientX, clientY } = e
@@ -140,7 +153,7 @@ export default function Hero() {
     const dx = (clientX - cx) / cx
     const dy = (clientY - cy) / cy
 
-    // Animate the words for parallax so it doesn't overwrite ScrollTrigger on the row
+    // Animate words directly since quickTo doesn't support dynamic functions like (i) => ...
     gsap.to('.hero-word', {
       x: (i) => (i + 1) * dx * -15,
       y: (i) => (i + 1) * dy * -8,
@@ -148,22 +161,12 @@ export default function Hero() {
       ease: 'power3.out',
       overwrite: 'auto'
     })
-
-    gsap.to('.hero-float', {
-      x: dx * 30,
-      y: dy * 30,
-      duration: 1.8,
-      ease: 'power2.out',
-      overwrite: 'auto'
-    })
-
-    gsap.to('.hud-el', {
-      x: dx * -10,
-      y: dy * -10,
-      duration: 0.5,
-      ease: 'power4.out',
-      overwrite: 'auto'
-    })
+    
+    if (xFloat.current) xFloat.current(dx * 30)
+    if (yFloat.current) yFloat.current(dy * 30)
+    
+    if (xHud.current) xHud.current(dx * -10)
+    if (yHud.current) yHud.current(dy * -10)
   })
 
   return (

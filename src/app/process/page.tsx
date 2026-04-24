@@ -97,10 +97,6 @@ export default function ProcessPage() {
         }, i) // Start right as the next one (i) begins sliding up
       }
     })
-
-    return () => {
-      ScrollTrigger.getAll().forEach(t => t.kill())
-    }
   }, { scope: containerRef })
 
   return (

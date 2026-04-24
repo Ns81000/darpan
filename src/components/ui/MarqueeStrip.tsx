@@ -17,10 +17,17 @@ export default function MarqueeStrip() {
     })
 
     const section = ref.current!
-    section.addEventListener('mouseenter', () =>
-      gsap.to(tlRef.current, { timeScale: 0.25, duration: 0.6, ease: 'power2.out' }))
-    section.addEventListener('mouseleave', () =>
-      gsap.to(tlRef.current, { timeScale: 1, duration: 0.8, ease: 'power2.inOut' }))
+    
+    const onEnter = () => gsap.to(tlRef.current, { timeScale: 0.25, duration: 0.6, ease: 'power2.out', overwrite: 'auto' })
+    const onLeave = () => gsap.to(tlRef.current, { timeScale: 1, duration: 0.8, ease: 'power2.inOut', overwrite: 'auto' })
+
+    section.addEventListener('mouseenter', onEnter, { passive: true })
+    section.addEventListener('mouseleave', onLeave, { passive: true })
+
+    return () => {
+      section.removeEventListener('mouseenter', onEnter)
+      section.removeEventListener('mouseleave', onLeave)
+    }
   }, { scope: ref })
 
   const repeated = `${CONTENT}${CONTENT}${CONTENT}${CONTENT}`

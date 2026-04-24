@@ -111,20 +111,26 @@ export default function WebGLBackground() {
     }
     gsap.ticker.add(tick)
 
+    let ww = window.innerWidth
+    let wh = window.innerHeight
+
     // Mouse parallax — GSAP smoothly interpolates uniform
+    let mouseTween: gsap.core.Tween | null = null
     const onMouse = (e: MouseEvent) => {
-      const nx = (e.clientX / window.innerWidth)  * 2 - 1
-      const ny = (e.clientY / window.innerHeight) * 2 - 1
-      gsap.to(uniforms.uMouse.value, {
+      const nx = (e.clientX / ww)  * 2 - 1
+      const ny = (e.clientY / wh) * 2 - 1
+      if (mouseTween) mouseTween.kill()
+      mouseTween = gsap.to(uniforms.uMouse.value, {
         x: nx, y: -ny,
         duration: 1.8, ease: 'power2.out',
-        overwrite: true,
       })
     }
-    window.addEventListener('mousemove', onMouse)
+    window.addEventListener('mousemove', onMouse, { passive: true })
 
     // Resize
     const onResize = () => {
+      ww = window.innerWidth
+      wh = window.innerHeight
       const nw = el.clientWidth
       const nh = el.clientHeight
       renderer.setSize(nw, nh)

@@ -25,13 +25,18 @@ const GlassCard = forwardRef<HTMLElement, Props<any>>(({
     if (!shimmer) return
     const el = localRef.current!
 
-    // GSAP shimmer: pseudo-element translateX sweep on hover
-    el.addEventListener('mouseenter', () => {
+    const onEnter = () => {
       gsap.fromTo(el.querySelector('.shimmer-layer') as HTMLElement,
         { x: '-100%' },
-        { x: '150%', duration: 0.7, ease: 'power2.inOut' }
+        { x: '150%', duration: 0.7, ease: 'power2.inOut', overwrite: 'auto' }
       )
-    })
+    }
+
+    el.addEventListener('mouseenter', onEnter)
+
+    return () => {
+      el.removeEventListener('mouseenter', onEnter)
+    }
   }, { scope: localRef })
 
   return (

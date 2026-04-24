@@ -43,14 +43,17 @@ export default function WorkPage() {
   // Floating Image Cursor Logic
   useEffect(() => {
     if (!floatingRef.current) return
-    const xTo = gsap.quickTo(floatingRef.current, 'left', { duration: 0.6, ease: 'power3.out' })
-    const yTo = gsap.quickTo(floatingRef.current, 'top', { duration: 0.6, ease: 'power3.out' })
+    
+    // Use x/y instead of left/top for compositor-only animation (huge performance boost)
+    gsap.set(floatingRef.current, { xPercent: -50, yPercent: -50 })
+    const xTo = gsap.quickTo(floatingRef.current, 'x', { duration: 0.6, ease: 'power3.out' })
+    const yTo = gsap.quickTo(floatingRef.current, 'y', { duration: 0.6, ease: 'power3.out' })
 
     const moveImage = (e: MouseEvent) => {
       xTo(e.clientX)
       yTo(e.clientY)
     }
-    window.addEventListener('mousemove', moveImage)
+    window.addEventListener('mousemove', moveImage, { passive: true })
     return () => window.removeEventListener('mousemove', moveImage)
   }, [])
 
@@ -121,7 +124,7 @@ export default function WorkPage() {
       {/* Custom Floating Image Container (Desktop Only, hidden on mobile via CSS) */}
       <div 
         ref={floatingRef}
-        className="hidden md:block fixed top-0 left-0 w-[480px] h-[270px] pointer-events-none z-50 overflow-hidden rounded-xl shadow-2xl border border-white/10 scale-0 opacity-0 -translate-x-1/2 -translate-y-1/2"
+        className="hidden md:block fixed top-0 left-0 w-[480px] h-[270px] pointer-events-none z-50 overflow-hidden rounded-xl shadow-2xl border border-white/10 scale-0 opacity-0"
       >
         <div ref={imagesRef} className="w-full h-full relative will-change-transform">
           {projects.map((p) => (
