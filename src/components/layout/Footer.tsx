@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useRef } from 'react'
+import { usePathname } from 'next/navigation'
 import { useGSAP } from '@gsap/react'
 import { gsap } from 'gsap'
 
@@ -9,19 +10,30 @@ const footerLinks = ['Work','Services','Process','Pricing','About','Contact']
 
 export default function Footer() {
   const ref = useRef<HTMLElement>(null)
+  const pathname = usePathname()
 
   useGSAP(() => {
-    gsap.from('.footer-divider', {
-      scrollTrigger: { trigger: ref.current, start: 'top 90%' },
-      scaleX: 0, transformOrigin: 'left',
-      duration: 1.0, ease: 'power3.out'
-    })
-    gsap.from('.footer-item', {
-      scrollTrigger: { trigger: ref.current, start: 'top 90%' },
-      y: 30, opacity: 0,
-      stagger: 0.08, duration: 0.8, ease: 'power2.out', delay: 0.2
-    })
-  }, { scope: ref })
+    // We use fromTo specifically to prevent stuck "from" states when the component
+    // does not unmount but we navigate to a new page (causing re-triggers).
+    gsap.fromTo('.footer-divider', 
+      { scaleX: 0 },
+      {
+        scrollTrigger: { trigger: ref.current, start: 'top 95%' },
+        scaleX: 1, transformOrigin: 'left',
+        duration: 1.0, ease: 'power3.out',
+        overwrite: 'auto'
+      }
+    )
+    gsap.fromTo('.footer-item',
+      { y: 30, opacity: 0 },
+      {
+        scrollTrigger: { trigger: ref.current, start: 'top 95%' },
+        y: 0, opacity: 1,
+        stagger: 0.08, duration: 0.8, ease: 'power2.out', delay: 0.2,
+        overwrite: 'auto'
+      }
+    )
+  }, { scope: ref, dependencies: [pathname] })
 
   return (
     <footer ref={ref} className="bg-black border-t border-white/10 relative z-[2] w-full px-[clamp(1.5rem,6vw,6rem)] py-8 md:py-10">

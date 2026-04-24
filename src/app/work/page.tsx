@@ -57,21 +57,21 @@ export default function WorkPage() {
     return () => window.removeEventListener('mousemove', moveImage)
   }, [])
 
-  // Reveal animations for rows
+  // Reveal animations for rows (appear all at once)
   useGSAP(() => {
     const rows = gsap.utils.toArray('.work-row');
-    rows.forEach((row: any) => {
-      gsap.from(row, {
-        scrollTrigger: {
-          trigger: row,
-          start: 'top 95%',
-        },
-        y: 100,
-        opacity: 0,
-        duration: 1,
-        ease: 'power3.out'
-      })
-    })
+    gsap.fromTo(rows, 
+      { y: 40, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        ease: 'expo.out',
+        stagger: 0,
+        delay: 0,
+        overwrite: 'auto'
+      }
+    )
   }, { scope: containerRef })
 
   const handleEnter = contextSafe((index: number, color: string) => {
@@ -84,14 +84,16 @@ export default function WorkPage() {
       opacity: 1,
       duration: 0.6,
       ease: 'power3.out',
-      rotate: Math.random() * 10 - 5 // Slight random rotation for organic feel
+      rotate: Math.random() * 10 - 5, // Slight random rotation for organic feel
+      overwrite: 'auto'
     })
 
     // Shift internal images container like a slot machine vertical slide
     gsap.to(imagesRef.current, {
       yPercent: -100 * index,
       duration: 0.6,
-      ease: 'power3.out'
+      ease: 'power3.out',
+      overwrite: 'auto'
     })
   })
 
@@ -105,7 +107,8 @@ export default function WorkPage() {
       opacity: 0,
       duration: 0.4,
       ease: 'power2.inOut',
-      rotate: 0
+      rotate: 0,
+      overwrite: 'auto'
     })
   })
 
@@ -148,7 +151,10 @@ export default function WorkPage() {
           </SplitReveal>
         </div>
 
-        <div className="border-t border-white/20 mt-12 relative z-20">
+        <div 
+          className="border-t border-white/20 mt-12 relative z-20"
+          onMouseLeave={handleLeave}
+        >
           {projects.map((p, i) => {
             // Use dynamically extracted dominant color if available, fallback to the hardcoded brand color
             const projectColor = dominantColors[p.id] || p.color

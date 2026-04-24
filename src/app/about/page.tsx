@@ -135,7 +135,7 @@ export default function AboutPage() {
 
     return () => {
       heroTitle.revert()
-      ScrollTrigger.getAll().forEach(t => t.kill())
+      // ScrollTriggers created in this useGSAP scope are automatically killed
     }
   }, { scope: containerRef })
 
