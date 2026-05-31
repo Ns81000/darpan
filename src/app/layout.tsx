@@ -9,6 +9,7 @@ import Footer         from '@/components/layout/Footer'
 import Preloader      from '@/components/layout/Preloader'
 import PageTransition from '@/components/layout/PageTransition'
 import RouteLoader    from '@/components/layout/RouteLoader'
+import MobileBlocker  from '@/components/layout/MobileBlocker'
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -32,20 +33,23 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${inter.variable}`}>
-      <body className="bg-bg-base text-accent font-body overflow-x-hidden">
-        <GSAPProvider>
-          <LenisProvider>
-            <TransitionRouter>
-              <Preloader />
-              <Nav />
-              <RouteLoader />
-              <PageTransition>
-                <main>{children}</main>
-              </PageTransition>
-              <Footer />
-            </TransitionRouter>
-          </LenisProvider>
-        </GSAPProvider>
+      <body className="bg-bg-base text-accent font-body overflow-x-hidden max-md:overflow-hidden max-md:h-[100svh]">
+        <MobileBlocker />
+        <div className="hidden md:block">
+          <GSAPProvider>
+            <LenisProvider>
+              <TransitionRouter>
+                <Preloader />
+                <Nav />
+                <RouteLoader />
+                <PageTransition>
+                  <main>{children}</main>
+                </PageTransition>
+                <Footer />
+              </TransitionRouter>
+            </LenisProvider>
+          </GSAPProvider>
+        </div>
       </body>
     </html>
   )

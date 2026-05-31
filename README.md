@@ -31,6 +31,7 @@ The application utilizes **Next.js App Router (v15)** paired with **React 19** a
 ## ⚡ Features
 
 ### 🖥 Immersive UI & UX
+- **Desktop-Exclusive Experience**: In order to run pure WebGL physics and complex animations without performance constraints, the application is strictly enforced as a desktop-only experience via a sleek mobile blockade overlay.
 - **WebGL Interactive Background**: A custom Three.js fluid simulation reacts to user cursor movements, creating continuous engaging visual feedback.
 - **Magnetic UI Elements**: Buttons and layout components feature physical magnetism and spring physics powered by QuickTo (`GSAP`).
 - **Smooth Scrolling**: Implemented globally via `Lenis` for premium scroll elasticity perfectly synced with ScrollTrigger.
