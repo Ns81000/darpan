@@ -24,7 +24,7 @@ export default function AboutPage() {
   
   const [heroHover, setHeroHover] = useState(false)
 
-  const { contextSafe } = useGSAP({ scope: containerRef })
+  useGSAP({ scope: containerRef })
 
   // 1. X-Ray Cursor Logic
   useEffect(() => {

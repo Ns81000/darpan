@@ -30,7 +30,7 @@ export default function Hero() {
 
     // New elegant SplitType setup - scoped to prevent stale DOM nodes fetching
     const words = sectionRef.current ? Array.from(sectionRef.current.querySelectorAll('.hero-word')) : '.hero-word'
-    const text = new SplitType(words as any, { types: 'chars' })
+    const text = new SplitType(words as HTMLElement[], { types: 'chars' })
     splitRef.current = text
 
     const tl = gsap.timeline()
@@ -110,33 +110,26 @@ export default function Hero() {
 
   useEffect(() => {
     let fallbackTimer: NodeJS.Timeout
-    const transitionHandler = () => {
-      clearTimeout(fallbackTimer)
-      setTimeout(startAnimation, 100)
-    }
 
-    // @ts-ignore
+    // @ts-expect-error: Custom window property
     if (!window.__PRELOADER_COMPLETE__) {
       window.addEventListener('preloader:complete', startAnimation, { once: true })
     } else {
-      const fallbackTimer = setTimeout(startAnimation, 300)
-      return () => {
-        clearTimeout(fallbackTimer)
-        if (splitRef.current) splitRef.current.revert()
-      }
+      fallbackTimer = setTimeout(startAnimation, 300)
     }
 
     return () => {
       window.removeEventListener('preloader:complete', startAnimation)
+      if (fallbackTimer) clearTimeout(fallbackTimer)
       if (splitRef.current) splitRef.current.revert()
     }
-  }, [])
+  }, [startAnimation])
 
   // QuickTo instances for 60fps mouse parallax
-  const xFloat = useRef<Function>()
-  const yFloat = useRef<Function>()
-  const xHud = useRef<Function>()
-  const yHud = useRef<Function>()
+  const xFloat = useRef<(value: number) => void>(null)
+  const yFloat = useRef<(value: number) => void>(null)
+  const xHud = useRef<(value: number) => void>(null)
+  const yHud = useRef<(value: number) => void>(null)
 
   useGSAP(() => {
     xFloat.current = gsap.quickTo('.hero-float', 'x', { duration: 1.8, ease: 'power2.out' })

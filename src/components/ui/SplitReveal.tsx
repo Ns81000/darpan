@@ -7,7 +7,7 @@ import { SplitText } from 'gsap/SplitText'
 
 interface SplitRevealProps {
   children: React.ReactNode
-  as?: any
+  as?: React.ElementType
   className?: string
   style?: React.CSSProperties
   delay?: number

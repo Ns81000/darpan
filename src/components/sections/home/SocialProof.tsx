@@ -56,8 +56,8 @@ export default function SocialProof() {
     }, '-=1.0') // Overlap the reveal
 
     // Cinematic decoding numbers linked to the scroll progress
-    const cards = gsap.utils.toArray('.stat-card')
-    cards.forEach((card: any) => {
+    const cards = gsap.utils.toArray<HTMLElement>('.stat-card')
+    cards.forEach((card) => {
       const targetElement = card.querySelector('.kinetic-stat') as HTMLElement
       const targetValue = parseInt(targetElement.dataset.target || '0', 10)
       const obj = { val: 0 }

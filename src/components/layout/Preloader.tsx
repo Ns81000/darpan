@@ -12,7 +12,7 @@ export default function Preloader() {
     const tl = gsap.timeline({
       onComplete: () => {
         if (containerRef.current) containerRef.current.style.display = 'none'
-        // @ts-ignore
+        // @ts-expect-error: Custom window property
         window.__PRELOADER_COMPLETE__ = true
         window.dispatchEvent(new Event('preloader:complete'))
       }

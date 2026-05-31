@@ -71,7 +71,7 @@ export default function Nav() {
         // If the mobile menu overlay is active, keep the nav pill fully visible
         if (menuOpenRef.current) return;
 
-        const currentScrollY = self.scrollY;
+        const currentScrollY = self.scroll();
         
         // Activate "Collapse" threshold
         if (currentScrollY > 120) {
@@ -147,7 +147,7 @@ export default function Nav() {
       setTimeout(entranceAnimation, 100)
     }
 
-    // @ts-ignore
+    // @ts-expect-error: Custom window property
     if (!window.__PRELOADER_COMPLETE__) {
       window.addEventListener('preloader:complete', entranceAnimation, { once: true })
     } else {
@@ -160,13 +160,17 @@ export default function Nav() {
       window.removeEventListener('transition:entered', transitionHandler)
       clearTimeout(fallbackTimer)
     }
-  }, [])
+  }, [entranceAnimation])
 
   const toggleMenu = () => {
     const newState = !menuOpen
     setMenuOpen(newState)
     menuOpenRef.current = newState
-    newState ? menuTL.current?.play() : menuTL.current?.reverse()
+    if (newState) {
+      menuTL.current?.play()
+    } else {
+      menuTL.current?.reverse()
+    }
   }
 
   return (
@@ -179,8 +183,10 @@ export default function Nav() {
           <div className="absolute inset-0 transition-opacity duration-700 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none" />
 
           <div className="relative flex items-center justify-between px-8 py-4 sm:px-10">
-            {/* Minimalist Wordmark */}
-            <Link href="/" className="font-display font-medium tracking-[0.4em] text-white/90 text-sm sm:text-base uppercase z-[11]">
+            {/* Minimalist Wordmark with Logo */}
+            <Link href="/" className="flex items-center gap-3 font-display font-medium tracking-[0.4em] text-white/90 text-sm sm:text-base uppercase z-[11]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.svg" alt="Darpan Logo" className="w-6 h-6 object-contain" />
               DARPAN
             </Link>
 

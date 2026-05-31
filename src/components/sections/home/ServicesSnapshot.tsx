@@ -52,7 +52,7 @@ export default function ServicesSnapshot() {
           duration: 0.5,
           delay: 0, // Starts snapping immediately
           ease: 'power3.inOut',
-          // @ts-ignore
+          // @ts-expect-error: Custom window property
           directional: true // Forces the snap to strictly go to the next/prev card even on tiny scrolls
         }
       }

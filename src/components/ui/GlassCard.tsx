@@ -11,7 +11,7 @@ type Props<T extends ElementType> = {
   style?: React.CSSProperties
 } & Omit<ComponentPropsWithRef<T>, 'as' | 'shimmer' | 'className' | 'style'>
 
-const GlassCard = forwardRef<HTMLElement, Props<any>>(({
+const GlassCard = forwardRef<HTMLElement, Props<ElementType>>(({
   className = '',
   as: Tag = 'div',
   shimmer = true,
@@ -67,5 +67,7 @@ const GlassCard = forwardRef<HTMLElement, Props<any>>(({
     </Tag>
   )
 })
+
+GlassCard.displayName = 'GlassCard'
 
 export default GlassCard

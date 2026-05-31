@@ -18,7 +18,7 @@ export default function WorkPage() {
   const floatingRef = useRef<HTMLDivElement>(null)
   const imagesRef = useRef<HTMLDivElement>(null)
   
-  const [activeProject, setActiveProject] = useState<number | null>(null)
+  const [, setActiveProject] = useState<number | null>(null)
   const [bgColor, setBgColor] = useState<string>('#0a0a0a')
   const [dominantColors, setDominantColors] = useState<Record<number, string>>({})
 

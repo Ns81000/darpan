@@ -58,9 +58,9 @@ export default function ServicesPage() {
     })
 
     // Setup Sticky Stacking Cards
-    const containers = gsap.utils.toArray('.service-container')
+    const containers = gsap.utils.toArray<HTMLElement>('.service-container')
     
-    containers.forEach((container: any, i) => {
+    containers.forEach((container, i) => {
       const innerCard = container.querySelector('.card-inner')
       
       // Animate background image for subtle parallax independently of stacking
@@ -100,7 +100,7 @@ export default function ServicesPage() {
     })
 
     // Sub-elements entrance animation when card comes fully into view
-    containers.forEach((container: any) => {
+    containers.forEach((container) => {
       const texts = container.querySelectorAll('.stagger-reveal')
       const lines = container.querySelectorAll('.list-item')
       
@@ -141,7 +141,7 @@ export default function ServicesPage() {
         </SplitReveal>
         
         <p className="hero-subtitle font-mono text-[10px] md:text-sm uppercase tracking-[0.3em] text-white/50 max-w-xl text-center leading-relaxed font-bold">
-          Precision engineered telemetry. We don't just edit videos. We build retention systems that monopolize human attention.
+          Precision engineered telemetry. We don&apos;t just edit videos. We build retention systems that monopolize human attention.
         </p>
 
         {/* Scroll down indicator */}

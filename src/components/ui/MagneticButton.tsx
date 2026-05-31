@@ -51,7 +51,7 @@ export default function MagneticButton({ href, onClick, className, children, typ
 
   return (
     <Tag
-      ref={ref as any}
+      ref={ref as never}
       href={href as string}
       onClick={onClick}
       className={className}
